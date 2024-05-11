@@ -1,74 +1,116 @@
-public class MyBinarySearchTree {
-    public Node root;
+import java.util.Iterator;
+import java.util.Stack;
 
-    public class Node {
-        int data;
-        Node left, right;
+public class MyBinarySearchTree<K extends Comparable<K>, V> implements Iterable<MyBinarySearchTree.Node<K, V>> {
+    public Node<K, V> root;
+    private int size;
 
-        public Node(int data) {
-            this.data = data;
-            left = right = null;
+    public static class Node<K, V> {
+        K key;
+        V val;
+        Node<K, V> left, right;
+
+        public Node(K key, V val) {
+            this.key = key;
+            this.val = val;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getVal() {
+            return val;
+        }
+
+        @Override
+        public String toString() {
+            return "{" + key + "=" + val + "}";
         }
     }
 
-    public void insert(int data) {
-        root = insert(root, data);
+    public void insert(K key, V val) {
+        root = insert(root, key, val);
     }
 
-    private Node insert(Node current, int data) {
-        if (current == null)
-            return new Node(data);
-        if (data < current.data)
-            current.left = insert(current.left, data);
+    private Node<K, V> insert(Node<K, V> current, K key, V val) {
+        if (current == null) {
+            size++;
+            return new Node<>(key, val);
+        }
+        if (key.compareTo(current.key) > 0)
+            current.left = insert(current.left, key, val);
         else
-            current.right = insert(current.right, data);
+            current.right = insert(current.right, key, val);
         return current;
     }
 
-    public void inOrder() {
-        inOrder(root);
+    public void remove(K key) {
+        root = remove(root, key);
     }
 
-    private void inOrder(Node node) {
-        if (node != null) {
-            inOrder(node.left);
-            System.out.print(node.data + " ");
-            inOrder(node.right);
-        }
-    }
-
-    public void remove(int data) {
-        root = remove(root, data);
-    }
-
-    private Node remove(Node current, int data) {
+    private Node<K, V> remove(Node<K, V> current, K key) {
         if (current == null)
             return null;
-        if (data < current.data)
-            current.left = remove(current.left, data);
-        else if (data > current.data)
-            current.right = remove(current.right, data);
+        if (key.compareTo(current.key) < 0)
+            current.left = remove(current.left, key);
+        else if (key.compareTo(current.key) > 0)
+            current.right = remove(current.right, key);
         else {
             //case 1: no child
             if (current.left == null && current.right == null)
                 return null;
 
             //case 2: only one child
-
             if (current.left == null)
                 return current.right;
 
             if (current.right == null)
                 return current.left;
 
-            int smallestValue = findSmallestValue(current.left);
-            current.data =smallestValue;
-            current.left = remove(current.left, smallestValue);
+            Node<K, V> t = findSmallestValue(current.left);
+            current.key = t.key;
+            current.val = t.val;
+            size--;
         }
         return current;
     }
 
-    private int findSmallestValue(Node node) {
-        return node.right == null ? node.data : findSmallestValue(node.right);
+    public int getSize() {
+        return size;
+    }
+
+    private Node<K, V> findSmallestValue(Node<K, V> node) {
+        return node.right == null ? node : findSmallestValue(node.right);
+    }
+
+    public Iterator<Node<K, V>> iterator() {
+        return new MyIterator();
+    }
+
+    private class MyIterator implements Iterator<Node<K, V>> {
+        private final Stack<Node<K, V>> stack;
+
+        public MyIterator() {
+            stack = new Stack<>();
+            addNodes(root);
+        }
+
+        private void addNodes(Node<K, V> node) {
+            if (node == null) return;
+            addNodes(node.left);
+            stack.push(node);
+            addNodes(node.right);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stack.empty();
+        }
+
+        @Override
+        public Node<K, V> next() {
+            return stack.pop();
+        }
     }
 }
